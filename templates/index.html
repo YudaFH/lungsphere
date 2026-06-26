@@ -7,111 +7,181 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/lucide@latest"></script>
 </head>
-<body class="min-h-screen bg-slate-50 text-slate-950">
-  <main class="mx-auto flex min-h-screen max-w-6xl flex-col gap-8 px-6 py-8">
-    <header class="flex flex-col gap-2 border-b border-slate-200 pb-5">
-      <p class="text-sm font-semibold uppercase tracking-wide text-teal-700">LungSphere</p>
-      <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
-        <div>
-          <h1 class="text-3xl font-bold text-slate-950">Early Lung Sound Screening</h1>
-          <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
-            Upload a respiratory sound recording. The system extracts DWT-MFCC features and estimates patient-level risk using the selected machine learning model.
-          </p>
+<body class="min-h-screen bg-[#f6f8fb] text-slate-950">
+  <header class="border-b border-slate-200 bg-white">
+    <div class="mx-auto flex max-w-7xl items-center justify-between px-6 py-4">
+      <div class="flex items-center gap-3">
+        <div class="flex h-9 w-9 items-center justify-center rounded-md bg-blue-700 text-white">
+          <i data-lucide="stethoscope" class="h-5 w-5"></i>
         </div>
-        <div class="rounded-md border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-900">
-          Model: <strong>{{ result.model_name if result else 'DWT-MFCC classifier' }}</strong><br>
-          Threshold: <strong>{{ result.threshold_percent if result else 50.0 }}%</strong>
+        <div>
+          <p class="text-base font-bold tracking-wide text-slate-950">LungSphere</p>
+          <p class="text-xs font-medium text-slate-500">Early lung sound screening prototype</p>
         </div>
       </div>
-    </header>
+      <div class="hidden items-center gap-2 text-xs font-semibold text-slate-500 sm:flex">
+        <span class="rounded-md border border-slate-200 px-3 py-2">{{ result.model_name if result else 'SVM-RBF DWT-MFCC' }}</span>
+        <span class="rounded-md border border-slate-200 px-3 py-2">Threshold {{ result.threshold_percent if result else 50.0 }}%</span>
+      </div>
+    </div>
+  </header>
 
-    <section class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
-      <form method="post" enctype="multipart/form-data" class="rounded-md border border-slate-200 bg-white p-5 shadow-sm">
-        <label class="block text-sm font-semibold text-slate-800" for="audio">Respiratory audio file</label>
-        <div class="mt-3 flex flex-col gap-3 sm:flex-row">
-          <input id="audio" name="audio" type="file" accept=".wav,.mp3,.flac,audio/*" class="block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm">
-          <button class="inline-flex items-center justify-center gap-2 rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800" type="submit">
+  <main class="mx-auto flex max-w-7xl flex-col gap-8 px-6 py-8">
+    <section class="grid gap-6 border-b border-slate-200 pb-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-end">
+      <div>
+        <p class="text-sm font-semibold uppercase tracking-wide text-blue-700">Respiratory audio analysis</p>
+        <h1 class="mt-3 max-w-3xl text-4xl font-bold tracking-normal text-slate-950">Early Lung Sound Screening</h1>
+        <p class="mt-4 max-w-3xl text-base leading-7 text-slate-600">
+          Upload a respiratory sound recording to extract DWT-MFCC features and estimate patient-level screening risk with the deployed machine learning model.
+        </p>
+      </div>
+      <aside class="rounded-md border border-amber-200 bg-white p-4 text-sm leading-6 text-slate-700">
+        <div class="flex items-start gap-3">
+          <i data-lucide="shield-alert" class="mt-0.5 h-5 w-5 shrink-0 text-amber-600"></i>
+          <p>
+            This application is a screening prototype for academic evaluation and is not intended to replace clinical diagnosis.
+          </p>
+        </div>
+      </aside>
+    </section>
+
+    <section class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
+      <form id="uploadForm" method="post" enctype="multipart/form-data" class="rounded-md border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="flex flex-col gap-1">
+          <label class="text-sm font-semibold text-slate-900" for="audio">Respiratory audio file</label>
+          <p class="text-sm text-slate-500">Accepted formats: WAV, MP3, and FLAC.</p>
+        </div>
+
+        <div class="mt-5 grid gap-4 md:grid-cols-[minmax(0,1fr)_150px]">
+          <input id="audio" name="audio" type="file" accept=".wav,.mp3,.flac,audio/*" class="sr-only">
+          <label for="audio" class="group flex min-h-24 cursor-pointer items-center gap-4 rounded-md border border-dashed border-slate-300 bg-white p-5 transition hover:border-blue-600 hover:bg-slate-50">
+            <span class="flex h-12 w-12 shrink-0 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-blue-700">
+              <i data-lucide="upload-cloud" class="h-6 w-6"></i>
+            </span>
+            <span class="min-w-0">
+              <span id="fileName" class="block truncate text-sm font-semibold text-slate-900">
+                {% if original_filename %}{{ original_filename }}{% else %}Choose an audio file{% endif %}
+              </span>
+              <span id="fileHint" class="mt-1 block text-sm text-slate-500">Click to browse from your device</span>
+            </span>
+          </label>
+
+          <button id="analyzeButton" class="inline-flex h-12 items-center justify-center gap-2 rounded-md bg-blue-700 px-5 text-sm font-semibold text-white transition hover:bg-blue-800 disabled:cursor-not-allowed disabled:bg-slate-400" type="submit">
             <i data-lucide="activity" class="h-4 w-4"></i>
-            Analyze
+            <span id="buttonLabel">Analyze</span>
           </button>
         </div>
+
         {% if error %}
-          <p class="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{{ error }}</p>
+          <p class="mt-5 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">{{ error }}</p>
         {% endif %}
       </form>
 
-      <aside class="rounded-md border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 class="text-sm font-semibold text-slate-800">Pipeline</h2>
-        <ol class="mt-4 space-y-3 text-sm text-slate-600">
-          <li class="flex gap-3"><i data-lucide="file-audio" class="h-4 w-4 text-teal-700"></i> Audio upload and validation</li>
-          <li class="flex gap-3"><i data-lucide="split-square-horizontal" class="h-4 w-4 text-teal-700"></i> 4-second segmentation</li>
-          <li class="flex gap-3"><i data-lucide="waveform" class="h-4 w-4 text-teal-700"></i> DWT statistics and MFCC mean/std features</li>
-          <li class="flex gap-3"><i data-lucide="brain-circuit" class="h-4 w-4 text-teal-700"></i> Machine learning probability inference</li>
+      <aside class="rounded-md border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="flex items-center justify-between gap-4">
+          <h2 class="text-sm font-semibold text-slate-900">Analysis pipeline</h2>
+          <span class="text-xs font-semibold uppercase tracking-wide text-blue-700">DWT-MFCC</span>
+        </div>
+        <ol class="mt-5 space-y-4 text-sm text-slate-600">
+          <li class="flex gap-3">
+            <i data-lucide="file-audio" class="mt-0.5 h-4 w-4 text-blue-700"></i>
+            <span>Audio upload and validation</span>
+          </li>
+          <li class="flex gap-3">
+            <i data-lucide="split-square-horizontal" class="mt-0.5 h-4 w-4 text-blue-700"></i>
+            <span>4-second respiratory sound segmentation</span>
+          </li>
+          <li class="flex gap-3">
+            <i data-lucide="waveform" class="mt-0.5 h-4 w-4 text-blue-700"></i>
+            <span>DWT statistics and MFCC mean/std feature extraction</span>
+          </li>
+          <li class="flex gap-3">
+            <i data-lucide="brain-circuit" class="mt-0.5 h-4 w-4 text-blue-700"></i>
+            <span>Patient-level machine learning inference</span>
+          </li>
         </ol>
       </aside>
     </section>
 
     {% if result %}
-    <section class="grid gap-6 lg:grid-cols-3">
-      <article class="rounded-md border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2">
-        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+    <section class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
+      <article class="rounded-md border border-slate-200 bg-white p-6 shadow-sm">
+        <div class="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <p class="text-sm font-semibold uppercase tracking-wide text-slate-500">Screening result</p>
-            <h2 class="mt-1 text-3xl font-bold {% if result.label_id %}text-orange-700{% else %}text-teal-700{% endif %}">
+            <h2 class="mt-2 text-4xl font-bold {% if result.label_id %}text-red-700{% else %}text-blue-700{% endif %}">
               {{ result.label }}
             </h2>
+            <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+              {% if result.label_id %}
+                The recording contains more segments above the decision threshold, indicating an elevated screening risk based on the current model.
+              {% else %}
+                The recording contains more segments below the decision threshold, indicating a lower screening risk based on the current model.
+              {% endif %}
+            </p>
           </div>
-          <div class="text-right">
-            <p class="text-sm text-slate-500">Risk score</p>
-            <p class="text-4xl font-bold text-slate-950">{{ result.risk_percent }}%</p>
+          <div class="min-w-32 text-left sm:text-right">
+            <p class="text-sm font-medium text-slate-500">Risk score</p>
+            <p class="mt-1 text-4xl font-bold text-slate-950">{{ result.risk_percent }}%</p>
           </div>
         </div>
 
         <div class="mt-6 h-3 overflow-hidden rounded-full bg-slate-100">
-          <div class="h-full {% if result.label_id %}bg-orange-500{% else %}bg-teal-600{% endif %}" style="width: {{ result.risk_percent }}%"></div>
+          <div class="h-full {% if result.label_id %}bg-red-600{% else %}bg-blue-700{% endif %}" style="width: {{ result.risk_percent }}%"></div>
         </div>
         <p class="mt-2 text-xs text-slate-500">Decision threshold: {{ result.threshold_percent }}%</p>
 
-        <div class="mt-6 grid gap-4 sm:grid-cols-3">
-          <div class="rounded-md bg-slate-50 p-4">
-            <p class="text-xs uppercase text-slate-500">Segments</p>
-            <p class="mt-1 text-2xl font-bold">{{ result.segment_count }}</p>
+        <dl class="mt-6 grid border-y border-slate-200 text-sm sm:grid-cols-3 sm:divide-x sm:divide-slate-200">
+          <div class="py-4 sm:px-4 sm:first:pl-0">
+            <dt class="font-semibold uppercase tracking-wide text-slate-500">Segments</dt>
+            <dd class="mt-2 text-3xl font-bold text-slate-950">{{ result.segment_count }}</dd>
           </div>
-          <div class="rounded-md bg-teal-50 p-4">
-            <p class="text-xs uppercase text-teal-700">Healthy-like</p>
-            <p class="mt-1 text-2xl font-bold text-teal-800">{{ result.healthy_segments }}</p>
+          <div class="py-4 sm:px-4">
+            <dt class="font-semibold uppercase tracking-wide text-slate-500">Low-risk segments</dt>
+            <dd class="mt-2 text-3xl font-bold text-blue-700">{{ result.healthy_segments }}</dd>
           </div>
-          <div class="rounded-md bg-orange-50 p-4">
-            <p class="text-xs uppercase text-orange-700">Unhealthy-like</p>
-            <p class="mt-1 text-2xl font-bold text-orange-800">{{ result.unhealthy_segments }}</p>
+          <div class="py-4 sm:px-4 sm:last:pr-0">
+            <dt class="font-semibold uppercase tracking-wide text-slate-500">High-risk segments</dt>
+            <dd class="mt-2 text-3xl font-bold text-red-700">{{ result.unhealthy_segments }}</dd>
           </div>
-        </div>
+        </dl>
 
-        <audio class="mt-6 w-full" controls src="{{ audio_url }}"></audio>
+        <div class="mt-6 rounded-md border border-slate-200 bg-slate-50 p-4">
+          <div class="flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
+            <p class="text-sm font-semibold text-slate-900">Uploaded file</p>
+            <p class="truncate text-sm text-slate-600">{{ original_filename }}</p>
+          </div>
+          <audio class="mt-4 w-full" controls src="{{ audio_url }}"></audio>
+        </div>
       </article>
 
-      <article class="rounded-md border border-slate-200 bg-white p-5 shadow-sm">
-        <h2 class="text-sm font-semibold text-slate-800">Processed recording</h2>
-        <dl class="mt-4 space-y-3 text-sm">
+      <article class="rounded-md border border-slate-200 bg-white p-6 shadow-sm">
+        <h2 class="text-sm font-semibold text-slate-900">Processed recording</h2>
+        <dl class="mt-5 space-y-4 text-sm">
+          <div class="flex justify-between gap-4">
+            <dt class="text-slate-500">File name</dt>
+            <dd class="max-w-48 truncate text-right font-semibold text-slate-900">{{ original_filename }}</dd>
+          </div>
           <div class="flex justify-between gap-4">
             <dt class="text-slate-500">Sample rate</dt>
-            <dd class="font-semibold">{{ result.sample_rate }} Hz</dd>
+            <dd class="font-semibold text-slate-900">{{ result.sample_rate }} Hz</dd>
           </div>
           <div class="flex justify-between gap-4">
             <dt class="text-slate-500">Duration used</dt>
-            <dd class="font-semibold">{{ result.processed_duration_sec }} s</dd>
+            <dd class="font-semibold text-slate-900">{{ result.processed_duration_sec }} s</dd>
           </div>
         </dl>
-        <div class="mt-6">
-          <h3 class="text-xs font-semibold uppercase text-slate-500">Segment probabilities</h3>
-          <div class="mt-3 space-y-2">
+
+        <div class="mt-7">
+          <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Segment probabilities</h3>
+          <div class="mt-4 space-y-3">
             {% for probability in result.segment_probabilities %}
-              <div class="flex items-center gap-3">
-                <span class="w-8 text-xs text-slate-500">S{{ loop.index }}</span>
-                <div class="h-2 flex-1 rounded-full bg-slate-100">
-                  <div class="h-full rounded-full bg-teal-600" style="width: {{ probability }}%"></div>
+              <div class="grid grid-cols-[32px_minmax(0,1fr)_54px] items-center gap-3">
+                <span class="text-xs font-medium text-slate-500">S{{ loop.index }}</span>
+                <div class="h-2 rounded-full bg-slate-100">
+                  <div class="h-full rounded-full {% if probability >= result.threshold_percent %}bg-red-600{% else %}bg-blue-700{% endif %}" style="width: {{ probability }}%"></div>
                 </div>
-                <span class="w-12 text-right text-xs font-semibold">{{ probability }}%</span>
+                <span class="text-right text-xs font-semibold text-slate-800">{{ probability }}%</span>
               </div>
             {% endfor %}
           </div>
@@ -119,7 +189,42 @@
       </article>
     </section>
     {% endif %}
+
+    <footer class="border-t border-slate-200 pt-5 text-sm text-slate-500">
+      <div class="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+        <p>LungSphere: Web-Based System for Early Lung Health Screening</p>
+        <p>Capstone Project Prototype</p>
+      </div>
+    </footer>
   </main>
-  <script>lucide.createIcons();</script>
+
+  <script>
+    const input = document.getElementById("audio");
+    const fileName = document.getElementById("fileName");
+    const fileHint = document.getElementById("fileHint");
+    const form = document.getElementById("uploadForm");
+    const button = document.getElementById("analyzeButton");
+    const buttonLabel = document.getElementById("buttonLabel");
+
+    input.addEventListener("change", () => {
+      const file = input.files && input.files[0];
+      if (!file) {
+        fileName.textContent = "Choose an audio file";
+        fileHint.textContent = "Click to browse from your device";
+        return;
+      }
+
+      const sizeMb = file.size / (1024 * 1024);
+      fileName.textContent = file.name;
+      fileHint.textContent = `${sizeMb.toFixed(2)} MB selected`;
+    });
+
+    form.addEventListener("submit", () => {
+      button.disabled = true;
+      buttonLabel.textContent = "Analyzing...";
+    });
+
+    lucide.createIcons();
+  </script>
 </body>
 </html>

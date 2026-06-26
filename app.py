@@ -66,7 +66,7 @@ def analyze_audio(path):
     final_label = 1 if unhealthy_segments > healthy_segments else 0
 
     return {
-        "label": "Unhealthy" if final_label else "Healthy",
+        "label": "High Risk" if final_label else "Low Risk",
         "label_id": final_label,
         "model_name": metadata.get("model_name", "DWT-MFCC classifier"),
         "feature_set": metadata.get("feature_set", "DWT-MFCC"),
@@ -110,6 +110,7 @@ def index():
         return render_template(
             "index.html",
             result=result,
+            original_filename=file.filename,
             audio_url=url_for("uploaded_file", filename=saved_path.name),
         )
 
