@@ -54,6 +54,17 @@ http://127.0.0.1:5001
 
 Format audio yang didukung: `.wav`, `.mp3`, dan `.flac`.
 
+## Deploy ke Render
+
+Repository ini sudah menyiapkan `render.yaml` dan `Procfile`, sehingga bisa
+dideploy sebagai Python web service.
+
+Konfigurasi manual jika diminta:
+
+- Build Command: `pip install -r requirements.txt`
+- Start Command: `gunicorn app:app`
+- Health Check Path: `/health`
+
 ## Catatan akademik
 
 Sistem ini adalah prototipe skrining awal dan bukan alat diagnosis medis final.
