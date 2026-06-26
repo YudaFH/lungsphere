@@ -1,4 +1,6 @@
 .git
+.env*
+.vercel
 .venv
 __pycache__
 data
