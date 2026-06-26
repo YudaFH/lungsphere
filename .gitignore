@@ -5,3 +5,4 @@ uploads/*
 models/*.joblib
 !models/best_lungsphere_model.joblib
 reports/*.json
+.vercel
