@@ -1,0 +1,8 @@
+{
+  "model_name": "SVM-RBF DWT-MFCC",
+  "model_path": "/Users/macbookair/Library/CloudStorage/OneDrive-Sav-A-Center/Documents/CAPSTONE PROJECT (SEMPRO)/program_final/models/best_lungsphere_model.joblib",
+  "feature_set": "DWT-MFCC",
+  "feature_count": 70,
+  "decision_threshold": 0.5,
+  "patient_aggregation": "majority voting from segment predictions"
+}

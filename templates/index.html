@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>LungSphere</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body class="min-h-screen bg-slate-50 text-slate-950">
+  <main class="mx-auto flex min-h-screen max-w-6xl flex-col gap-8 px-6 py-8">
+    <header class="flex flex-col gap-2 border-b border-slate-200 pb-5">
+      <p class="text-sm font-semibold uppercase tracking-wide text-teal-700">LungSphere</p>
+      <div class="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div>
+          <h1 class="text-3xl font-bold text-slate-950">Early Lung Sound Screening</h1>
+          <p class="mt-2 max-w-3xl text-sm leading-6 text-slate-600">
+            Upload a respiratory sound recording. The system extracts DWT-MFCC features and estimates patient-level risk using the selected machine learning model.
+          </p>
+        </div>
+        <div class="rounded-md border border-teal-200 bg-teal-50 px-4 py-3 text-sm text-teal-900">
+          Model: <strong>{{ result.model_name if result else 'DWT-MFCC classifier' }}</strong><br>
+          Threshold: <strong>{{ result.threshold_percent if result else 50.0 }}%</strong>
+        </div>
+      </div>
+    </header>
+
+    <section class="grid gap-6 lg:grid-cols-[minmax(0,1fr)_360px]">
+      <form method="post" enctype="multipart/form-data" class="rounded-md border border-slate-200 bg-white p-5 shadow-sm">
+        <label class="block text-sm font-semibold text-slate-800" for="audio">Respiratory audio file</label>
+        <div class="mt-3 flex flex-col gap-3 sm:flex-row">
+          <input id="audio" name="audio" type="file" accept=".wav,.mp3,.flac,audio/*" class="block w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm">
+          <button class="inline-flex items-center justify-center gap-2 rounded-md bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800" type="submit">
+            <i data-lucide="activity" class="h-4 w-4"></i>
+            Analyze
+          </button>
+        </div>
+        {% if error %}
+          <p class="mt-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-800">{{ error }}</p>
+        {% endif %}
+      </form>
+
+      <aside class="rounded-md border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 class="text-sm font-semibold text-slate-800">Pipeline</h2>
+        <ol class="mt-4 space-y-3 text-sm text-slate-600">
+          <li class="flex gap-3"><i data-lucide="file-audio" class="h-4 w-4 text-teal-700"></i> Audio upload and validation</li>
+          <li class="flex gap-3"><i data-lucide="split-square-horizontal" class="h-4 w-4 text-teal-700"></i> 4-second segmentation</li>
+          <li class="flex gap-3"><i data-lucide="waveform" class="h-4 w-4 text-teal-700"></i> DWT statistics and MFCC mean/std features</li>
+          <li class="flex gap-3"><i data-lucide="brain-circuit" class="h-4 w-4 text-teal-700"></i> Machine learning probability inference</li>
+        </ol>
+      </aside>
+    </section>
+
+    {% if result %}
+    <section class="grid gap-6 lg:grid-cols-3">
+      <article class="rounded-md border border-slate-200 bg-white p-5 shadow-sm lg:col-span-2">
+        <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p class="text-sm font-semibold uppercase tracking-wide text-slate-500">Screening result</p>
+            <h2 class="mt-1 text-3xl font-bold {% if result.label_id %}text-orange-700{% else %}text-teal-700{% endif %}">
+              {{ result.label }}
+            </h2>
+          </div>
+          <div class="text-right">
+            <p class="text-sm text-slate-500">Risk score</p>
+            <p class="text-4xl font-bold text-slate-950">{{ result.risk_percent }}%</p>
+          </div>
+        </div>
+
+        <div class="mt-6 h-3 overflow-hidden rounded-full bg-slate-100">
+          <div class="h-full {% if result.label_id %}bg-orange-500{% else %}bg-teal-600{% endif %}" style="width: {{ result.risk_percent }}%"></div>
+        </div>
+        <p class="mt-2 text-xs text-slate-500">Decision threshold: {{ result.threshold_percent }}%</p>
+
+        <div class="mt-6 grid gap-4 sm:grid-cols-3">
+          <div class="rounded-md bg-slate-50 p-4">
+            <p class="text-xs uppercase text-slate-500">Segments</p>
+            <p class="mt-1 text-2xl font-bold">{{ result.segment_count }}</p>
+          </div>
+          <div class="rounded-md bg-teal-50 p-4">
+            <p class="text-xs uppercase text-teal-700">Healthy-like</p>
+            <p class="mt-1 text-2xl font-bold text-teal-800">{{ result.healthy_segments }}</p>
+          </div>
+          <div class="rounded-md bg-orange-50 p-4">
+            <p class="text-xs uppercase text-orange-700">Unhealthy-like</p>
+            <p class="mt-1 text-2xl font-bold text-orange-800">{{ result.unhealthy_segments }}</p>
+          </div>
+        </div>
+
+        <audio class="mt-6 w-full" controls src="{{ audio_url }}"></audio>
+      </article>
+
+      <article class="rounded-md border border-slate-200 bg-white p-5 shadow-sm">
+        <h2 class="text-sm font-semibold text-slate-800">Processed recording</h2>
+        <dl class="mt-4 space-y-3 text-sm">
+          <div class="flex justify-between gap-4">
+            <dt class="text-slate-500">Sample rate</dt>
+            <dd class="font-semibold">{{ result.sample_rate }} Hz</dd>
+          </div>
+          <div class="flex justify-between gap-4">
+            <dt class="text-slate-500">Duration used</dt>
+            <dd class="font-semibold">{{ result.processed_duration_sec }} s</dd>
+          </div>
+        </dl>
+        <div class="mt-6">
+          <h3 class="text-xs font-semibold uppercase text-slate-500">Segment probabilities</h3>
+          <div class="mt-3 space-y-2">
+            {% for probability in result.segment_probabilities %}
+              <div class="flex items-center gap-3">
+                <span class="w-8 text-xs text-slate-500">S{{ loop.index }}</span>
+                <div class="h-2 flex-1 rounded-full bg-slate-100">
+                  <div class="h-full rounded-full bg-teal-600" style="width: {{ probability }}%"></div>
+                </div>
+                <span class="w-12 text-right text-xs font-semibold">{{ probability }}%</span>
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+      </article>
+    </section>
+    {% endif %}
+  </main>
+  <script>lucide.createIcons();</script>
+</body>
+</html>
