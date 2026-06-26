@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 
 
@@ -6,7 +7,8 @@ BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
 MODEL_DIR = BASE_DIR / "models"
 REPORT_DIR = BASE_DIR / "reports"
-UPLOAD_DIR = BASE_DIR / "uploads"
+DEFAULT_UPLOAD_DIR = Path("/tmp/lungsphere_uploads") if os.environ.get("VERCEL") else BASE_DIR / "uploads"
+UPLOAD_DIR = Path(os.environ.get("UPLOAD_DIR", DEFAULT_UPLOAD_DIR))
 
 FEATURES_CSV = DATA_DIR / "fraiwan_dwt_segments_best.csv"
 SVM_MODEL_PATH = MODEL_DIR / "svm_dwt_mfcc_lungsphere.joblib"

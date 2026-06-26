@@ -54,6 +54,19 @@ http://127.0.0.1:5001
 
 Format audio yang didukung: `.wav`, `.mp3`, dan `.flac`.
 
+## Deploy ke Vercel
+
+Repository ini sudah menyiapkan `vercel.json`, sehingga bisa dideploy sebagai
+Flask application di Vercel.
+
+Konfigurasi yang digunakan:
+
+- Install Command: `pip install -r requirements.txt`
+- Entry point: `app.py`
+- Health Check Path: `/health`
+
+Saat berjalan di Vercel, file upload sementara disimpan di `/tmp/lungsphere_uploads`.
+
 ## Deploy ke Render
 
 Repository ini sudah menyiapkan `render.yaml` dan `Procfile`, sehingga bisa
