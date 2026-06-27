@@ -4,7 +4,7 @@ from pathlib import Path
 
 import joblib
 import numpy as np
-from flask import Flask, render_template, request, send_from_directory, url_for
+from flask import Flask, jsonify, render_template, request, send_from_directory, url_for
 from werkzeug.utils import secure_filename
 
 from config import BEST_MODEL_PATH, DECISION_THRESHOLD, MODEL_METADATA_PATH, UPLOAD_DIR
@@ -84,11 +84,21 @@ def analyze_audio(path):
 @app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
+        wants_json = request.headers.get("X-Requested-With") == "fetch"
         file = request.files.get("audio")
         if not file or not file.filename:
+            if wants_json:
+                return jsonify({"ok": False, "error": "Please choose an audio file first."}), 400
             return render_template("index.html", error="Please choose an audio file first.")
 
         if not allowed_file(file.filename):
+            if wants_json:
+                return jsonify(
+                    {
+                        "ok": False,
+                        "error": "Unsupported file type. Please upload .wav, .mp3, or .flac.",
+                    }
+                ), 400
             return render_template(
                 "index.html",
                 error="Unsupported file type. Please upload .wav, .mp3, or .flac.",
@@ -105,13 +115,25 @@ def index():
         try:
             result = analyze_audio(saved_path)
         except Exception as exc:
+            if wants_json:
+                return jsonify({"ok": False, "error": str(exc)}), 500
             return render_template("index.html", error=str(exc))
+
+        audio_url = url_for("uploaded_file", filename=saved_path.name)
+        if wants_json:
+            result_html = render_template(
+                "_results.html",
+                result=result,
+                original_filename=file.filename,
+                audio_url=audio_url,
+            )
+            return jsonify({"ok": True, "result_html": result_html})
 
         return render_template(
             "index.html",
             result=result,
             original_filename=file.filename,
-            audio_url=url_for("uploaded_file", filename=saved_path.name),
+            audio_url=audio_url,
         )
 
     return render_template("index.html")

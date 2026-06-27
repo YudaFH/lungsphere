@@ -1,0 +1,121 @@
+<section class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
+  <article class="border-2 border-zinc-900 bg-white p-5">
+    <div class="flex flex-col gap-5 border-b border-zinc-300 pb-5 sm:flex-row sm:items-start sm:justify-between">
+      <div>
+        <p class="text-sm font-bold uppercase tracking-wide text-zinc-500" data-id="Hasil skrining" data-en="Screening result">Screening result</p>
+        <h2 class="mt-3 text-5xl font-bold {% if result.label_id %}text-red-700{% else %}text-zinc-950{% endif %}" data-id="{% if result.label_id %}Risiko Tinggi{% else %}Risiko Rendah{% endif %}" data-en="{{ result.label }}">
+          {{ result.label }}
+        </h2>
+      </div>
+      <div class="min-w-32 text-left sm:text-right">
+        <p class="text-sm font-bold uppercase tracking-wide text-zinc-500" data-id="Skor risiko" data-en="Risk score">Risk score</p>
+        <p class="mt-2 text-5xl font-bold text-zinc-950">{{ result.risk_percent }}%</p>
+      </div>
+    </div>
+
+    <div class="mt-5">
+      <div class="h-3 bg-zinc-100">
+        <div class="h-full {% if result.label_id %}bg-red-700{% else %}bg-zinc-900{% endif %}" style="width: {{ result.risk_percent }}%"></div>
+      </div>
+      <p class="mt-2 text-xs font-semibold uppercase tracking-wide text-zinc-500">
+        <span data-id="Ambang keputusan" data-en="Decision threshold">Decision threshold</span> {{ result.threshold_percent }}%
+      </p>
+    </div>
+
+    <dl class="mt-5 grid border-y border-zinc-300 text-sm sm:grid-cols-3 sm:divide-x sm:divide-zinc-300">
+      <div class="py-4 sm:px-4 sm:first:pl-0">
+        <dt class="font-bold uppercase tracking-wide text-zinc-500" data-id="Segmen" data-en="Segments">Segments</dt>
+        <dd class="mt-2 text-3xl font-bold text-zinc-950">{{ result.segment_count }}</dd>
+      </div>
+      <div class="py-4 sm:px-4">
+        <dt class="font-bold uppercase tracking-wide text-zinc-500" data-id="Risiko rendah" data-en="Low risk">Low risk</dt>
+        <dd class="mt-2 text-3xl font-bold text-zinc-950">{{ result.healthy_segments }}</dd>
+      </div>
+      <div class="py-4 sm:px-4 sm:last:pr-0">
+        <dt class="font-bold uppercase tracking-wide text-zinc-500" data-id="Risiko tinggi" data-en="High risk">High risk</dt>
+        <dd class="mt-2 text-3xl font-bold {% if result.unhealthy_segments %}text-red-700{% else %}text-zinc-950{% endif %}">{{ result.unhealthy_segments }}</dd>
+      </div>
+    </dl>
+
+    <div class="mt-5 border border-zinc-300 bg-white p-4">
+      <div class="grid gap-1 sm:grid-cols-[120px_minmax(0,1fr)] sm:items-center">
+        <p class="text-xs font-bold uppercase tracking-wide text-zinc-500" data-id="File" data-en="File">File</p>
+        <p class="truncate text-sm font-semibold text-zinc-900">{{ original_filename }}</p>
+      </div>
+      <audio class="mt-4 w-full" controls src="{{ audio_url }}"></audio>
+    </div>
+  </article>
+
+  <article class="border-2 border-zinc-900 bg-white p-5">
+    <h2 class="border-b border-zinc-300 pb-4 text-sm font-bold uppercase tracking-wide text-zinc-900" data-id="Rekaman diproses" data-en="Processed recording">Processed recording</h2>
+    <dl class="mt-5 divide-y divide-zinc-300 border-y border-zinc-300 text-sm">
+      <div class="grid grid-cols-[86px_minmax(0,1fr)] gap-3 py-3">
+        <dt class="font-semibold text-zinc-500" data-id="File" data-en="File">File</dt>
+        <dd class="truncate text-right font-bold text-zinc-950">{{ original_filename }}</dd>
+      </div>
+      <div class="grid grid-cols-[86px_minmax(0,1fr)] gap-3 py-3">
+        <dt class="font-semibold text-zinc-500" data-id="Rate" data-en="Rate">Rate</dt>
+        <dd class="text-right font-bold text-zinc-950">{{ result.sample_rate }} Hz</dd>
+      </div>
+      <div class="grid grid-cols-[86px_minmax(0,1fr)] gap-3 py-3">
+        <dt class="font-semibold text-zinc-500" data-id="Durasi" data-en="Duration">Duration</dt>
+        <dd class="text-right font-bold text-zinc-950">{{ result.processed_duration_sec }} s</dd>
+      </div>
+    </dl>
+
+    <div class="mt-6">
+      <h3 class="text-xs font-bold uppercase tracking-wide text-zinc-500" data-id="Probabilitas segmen" data-en="Segment probability">Segment probability</h3>
+      <div class="mt-4 space-y-3">
+        {% for probability in result.segment_probabilities %}
+          <div class="grid grid-cols-[32px_minmax(0,1fr)_54px] items-center gap-3">
+            <span class="text-xs font-bold text-zinc-500">S{{ loop.index }}</span>
+            <div class="h-2 bg-zinc-100">
+              <div class="h-full {% if probability >= result.threshold_percent %}bg-red-700{% else %}bg-zinc-900{% endif %}" style="width: {{ probability }}%"></div>
+            </div>
+            <span class="text-right text-xs font-bold text-zinc-900">{{ probability }}%</span>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  </article>
+</section>
+
+<section class="grid gap-5 lg:grid-cols-2">
+  <article class="border-2 border-zinc-900 bg-white p-5">
+    <h2 class="border-b border-zinc-300 pb-4 text-sm font-bold uppercase tracking-wide text-zinc-900" data-id="Kemungkinan yang perlu dipertimbangkan" data-en="Clinical possibilities to consider">Clinical possibilities to consider</h2>
+    <p class="mt-4 text-sm leading-6 text-zinc-700" data-id="Model ini tidak mengklasifikasikan penyakit spesifik. Daftar berikut adalah kemungkinan klinis yang perlu dipertimbangkan bila hasil skrining tinggi atau gejala respirasi tetap ada." data-en="This model does not classify a specific disease. The list below shows clinical possibilities to consider when screening risk is high or respiratory symptoms persist.">This model does not classify a specific disease. The list below shows clinical possibilities to consider when screening risk is high or respiratory symptoms persist.</p>
+    <ul class="mt-4 space-y-3 text-sm leading-6 text-zinc-700">
+      {% if result.label_id %}
+        <li class="border-l-2 border-zinc-900 pl-3" data-id="Infeksi saluran napas bawah atau pneumonia, terutama bila disertai batuk, demam, nyeri dada, napas cepat, atau sulit bernapas." data-en="Lower respiratory infection or pneumonia, especially when accompanied by cough, fever, chest pain, rapid breathing, or difficulty breathing.">Lower respiratory infection or pneumonia, especially when accompanied by cough, fever, chest pain, rapid breathing, or difficulty breathing.</li>
+        <li class="border-l-2 border-zinc-900 pl-3" data-id="Asma, PPOK, atau bronkitis kronis, terutama bila ada mengi, batuk berulang, dahak berlebih, atau sesak saat aktivitas." data-en="Asthma, COPD, or chronic bronchitis, especially when wheezing, recurrent cough, excess mucus, or shortness of breath during activity is present.">Asthma, COPD, or chronic bronchitis, especially when wheezing, recurrent cough, excess mucus, or shortness of breath during activity is present.</li>
+        <li class="border-l-2 border-zinc-900 pl-3" data-id="Iritasi atau eksaserbasi jalan napas yang membutuhkan konfirmasi melalui pemeriksaan klinis." data-en="Airway irritation or exacerbation that requires confirmation through clinical examination.">Airway irritation or exacerbation that requires confirmation through clinical examination.</li>
+      {% else %}
+        <li class="border-l-2 border-zinc-900 pl-3" data-id="Risiko rendah tidak menyingkirkan penyakit. Gejala seperti batuk menetap, demam, sesak, atau nyeri dada tetap perlu diperhatikan." data-en="Low risk does not rule out disease. Persistent cough, fever, shortness of breath, or chest pain should still be monitored.">Low risk does not rule out disease. Persistent cough, fever, shortness of breath, or chest pain should still be monitored.</li>
+        <li class="border-l-2 border-zinc-900 pl-3" data-id="Pertimbangkan rekaman ulang bila audio berisik, terlalu pendek, atau tidak merekam suara napas dengan jelas." data-en="Consider repeating the recording if the audio is noisy, too short, or does not clearly capture respiratory sounds.">Consider repeating the recording if the audio is noisy, too short, or does not clearly capture respiratory sounds.</li>
+      {% endif %}
+    </ul>
+  </article>
+
+  <article class="border-2 border-zinc-900 bg-white p-5">
+    <h2 class="border-b border-zinc-300 pb-4 text-sm font-bold uppercase tracking-wide text-zinc-900" data-id="Saran tindakan" data-en="Suggested next steps">Suggested next steps</h2>
+    <ul class="mt-4 space-y-3 text-sm leading-6 text-zinc-700">
+      {% if result.label_id %}
+        <li class="border-l-2 border-zinc-900 pl-3" data-id="Konsultasikan hasil dengan dokter atau tenaga kesehatan untuk pemeriksaan fisik dan evaluasi lanjutan." data-en="Discuss the result with a physician or healthcare professional for physical examination and further evaluation.">Discuss the result with a physician or healthcare professional for physical examination and further evaluation.</li>
+        <li class="border-l-2 border-zinc-900 pl-3" data-id="Segera cari pertolongan medis bila ada sesak berat, nyeri dada, bibir atau wajah kebiruan, kebingungan, demam tinggi, atau batuk memburuk." data-en="Seek urgent medical care if severe breathing difficulty, chest pain, bluish lips or face, confusion, high fever, or worsening cough occurs.">Seek urgent medical care if severe breathing difficulty, chest pain, bluish lips or face, confusion, high fever, or worsening cough occurs.</li>
+      {% else %}
+        <li class="border-l-2 border-zinc-900 pl-3" data-id="Pantau gejala dan ulangi pemeriksaan bila kondisi berubah atau rekaman sebelumnya kurang jelas." data-en="Monitor symptoms and repeat screening if the condition changes or the previous recording was unclear.">Monitor symptoms and repeat screening if the condition changes or the previous recording was unclear.</li>
+        <li class="border-l-2 border-zinc-900 pl-3" data-id="Tetap konsultasi bila batuk, demam, sesak, mengi, atau nyeri dada menetap." data-en="Still seek clinical advice if cough, fever, shortness of breath, wheezing, or chest pain persists.">Still seek clinical advice if cough, fever, shortness of breath, wheezing, or chest pain persists.</li>
+      {% endif %}
+    </ul>
+    <div class="mt-5 border-t border-zinc-300 pt-4">
+      <h3 class="text-xs font-bold uppercase tracking-wide text-zinc-500" data-id="Landasan ilmiah ringkas" data-en="Scientific basis">Scientific basis</h3>
+      <div class="mt-3 flex flex-wrap gap-2 text-xs font-semibold text-zinc-700">
+        <a class="border border-zinc-300 px-2 py-1 hover:border-zinc-900" href="https://www.cdc.gov/pneumococcal/signs-symptoms/index.html" target="_blank" rel="noreferrer">CDC Pneumonia</a>
+        <a class="border border-zinc-300 px-2 py-1 hover:border-zinc-900" href="https://www.cdc.gov/asthma/about/index.html" target="_blank" rel="noreferrer">CDC Asthma</a>
+        <a class="border border-zinc-300 px-2 py-1 hover:border-zinc-900" href="https://www.cdc.gov/copd/about/index.html" target="_blank" rel="noreferrer">CDC COPD</a>
+        <a class="border border-zinc-300 px-2 py-1 hover:border-zinc-900" href="https://www.cdc.gov/respiratory-viruses/about/index.html" target="_blank" rel="noreferrer">CDC Warning Signs</a>
+        <a class="border border-zinc-300 px-2 py-1 hover:border-zinc-900" href="https://www.who.int/news-room/fact-sheets/detail/asthma" target="_blank" rel="noreferrer">WHO Asthma</a>
+      </div>
+    </div>
+  </article>
+</section>
